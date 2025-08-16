@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { Copy, Check, Save, X } from 'lucide-react'
+import { Save, X } from 'lucide-react'
 import { SchemaField, ZodSchemaDesignerProps } from './types'
 import { SchemaFieldEditor } from './schema-field-editor'
 import { PropertiesPanel } from './properties-panel'
-import { generateZodSchema, zodToJson } from './schema-utils'
+import { SchemaPreview } from './schema-preview'
+import { zodToJson } from './schema-utils'
 import { z } from 'zod'
 
 export function ZodSchemaDesigner({ initialSchema, onSave, showGeneratedCode = true }: ZodSchemaDesignerProps) {
@@ -14,7 +15,6 @@ export function ZodSchemaDesigner({ initialSchema, onSave, showGeneratedCode = t
     initialSchema instanceof z.ZodType ? zodToJson(initialSchema) : initialSchema
   );
   const [selectedField, setSelectedField] = useState<SchemaField | null>(null);
-  const [isCopied, setIsCopied] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [newField, setNewField] = useState<SchemaField | null>(null);
   const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
@@ -89,14 +89,6 @@ export function ZodSchemaDesigner({ initialSchema, onSave, showGeneratedCode = t
     setHasUnsavedChanges(true);
   };
 
-  const handleCopyCode = () => {
-    const code = generateZodSchema(schema);
-    navigator.clipboard.writeText(code).then(() => {
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    });
-  };
-
   const handleAddField = (newField: SchemaField) => {
     setSelectedField(newField);
     setNewField(newField);
@@ -118,21 +110,14 @@ export function ZodSchemaDesigner({ initialSchema, onSave, showGeneratedCode = t
             isNewField={newField === schema}
           />
         </div>
+        
         {showGeneratedCode && (
-          <div className="p-4 border-t">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Generated Zod Schema</h3>
-              <Button onClick={handleCopyCode} className="flex items-center">
-                {isCopied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                {isCopied ? 'Copied!' : 'Copy'}
-              </Button>
-            </div>
-            <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-              <code>{generateZodSchema(schema)}</code>
-            </pre>
+          <div className="border-t">
+            <SchemaPreview schema={schema} />
           </div>
         )}
       </div>
+      
       {selectedField && (
         <div className={`fixed md:relative top-0 left-0 w-full md:w-1/3 h-full bg-white overflow-auto border-l transition-all ${showPropertiesPanel ? 'block' : 'hidden md:block'}`}>
           <div className="flex items-center justify-between p-4 border-b md:hidden">
@@ -149,6 +134,7 @@ export function ZodSchemaDesigner({ initialSchema, onSave, showGeneratedCode = t
           />
         </div>
       )}
+      
       <div className="absolute bottom-4 right-4">
         <Button
           onClick={handleSave}

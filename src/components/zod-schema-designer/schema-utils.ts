@@ -1,6 +1,8 @@
 import { SchemaField, SchemaType, ValidationOptions } from './types'
 import { z } from 'zod'
 
+export type { SchemaField, SchemaType, ValidationOptions } from './types'
+
 export const getSimpleValidationView = (type: SchemaType, validations?: ValidationOptions): string => {
   if (!validations) return ''
   const parts = []
