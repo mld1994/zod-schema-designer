@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export type SchemaType = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'enum' | 'union' | 'date' | 'file' | 'calculated';
+export type SchemaType = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'enum' | 'union' | 'date' | 'file' | 'calculated' | 'null' | 'undefined';
 
 export interface ValidationOptions {
   required?: boolean;
@@ -25,6 +25,7 @@ export interface SchemaField {
   validations?: ValidationOptions;
   label?: string;
   calculatedField?: CalculatedFieldOptions;
+  unionTypes?: SchemaType[];
 }
 
 export type InitialSchema = SchemaField | z.ZodTypeAny;

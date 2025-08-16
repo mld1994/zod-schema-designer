@@ -22,6 +22,7 @@ export function PropertiesPanel({ field, onUpdate, onDelete, availableFields }: 
       updatedField.children = undefined;
       updatedField.enumValues = undefined;
       updatedField.calculatedField = undefined;
+      updatedField.unionTypes = undefined;
     }
     onUpdate(updatedField);
   };
@@ -73,6 +74,7 @@ export function PropertiesPanel({ field, onUpdate, onDelete, availableFields }: 
                 <SelectItem value="enum">Enum</SelectItem>
                 <SelectItem value="array">Array</SelectItem>
                 <SelectItem value="object">Object</SelectItem>
+                <SelectItem value="union">Union</SelectItem>
                 <SelectItem value="calculated">Calculated</SelectItem>
               </SelectContent>
             </Select>
@@ -114,6 +116,62 @@ export function PropertiesPanel({ field, onUpdate, onDelete, availableFields }: 
                 placeholder="value1, value2, value3"
                 className="col-span-3"
               />
+            </div>
+          )}
+
+          {field.type === 'union' && (
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">
+                Union Types
+              </Label>
+              <div className="col-span-3 space-y-2">
+                {(field.unionTypes || []).map((unionType, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <Select
+                      value={unionType}
+                      onValueChange={(value) => {
+                        const newUnionTypes = [...(field.unionTypes || [])];
+                        newUnionTypes[index] = value;
+                        handleChange('unionTypes', newUnionTypes);
+                      }}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="string">string</SelectItem>
+                        <SelectItem value="number">number</SelectItem>
+                        <SelectItem value="boolean">boolean</SelectItem>
+                        <SelectItem value="null">null</SelectItem>
+                        <SelectItem value="undefined">undefined</SelectItem>
+                        <SelectItem value="date">date</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newUnionTypes = (field.unionTypes || []).filter((_, i) => i !== index);
+                        handleChange('unionTypes', newUnionTypes);
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newUnionTypes = [...(field.unionTypes || []), 'string'];
+                    handleChange('unionTypes', newUnionTypes);
+                  }}
+                >
+                  Add Union Type
+                </Button>
+              </div>
             </div>
           )}
 

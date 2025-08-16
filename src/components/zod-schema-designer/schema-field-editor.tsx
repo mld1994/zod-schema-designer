@@ -80,6 +80,11 @@ export const SchemaFieldEditor: React.FC<SchemaFieldEditorProps> = ({
             [{field.enumValues?.join(', ')}]
           </span>
         )}
+        {field.type === 'union' && (
+          <span className="ml-2 text-sm text-gray-500">
+            [{field.unionTypes?.join(' | ')}]
+          </span>
+        )}
         {field.description && (
           <TooltipProvider>
             <Tooltip>

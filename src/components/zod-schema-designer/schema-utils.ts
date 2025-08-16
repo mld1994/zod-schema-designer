@@ -20,6 +20,40 @@ export const generateZodSchema = (field: SchemaField): string => {
       schema = `z.coerce.${f.type}()`;
     }
 
+    // Handle union types separately
+    if (f.type === 'union' && f.unionTypes) {
+      const unionSchemas = f.unionTypes.map(unionType => {
+        if (unionType === 'null') return 'z.null()';
+        if (unionType === 'undefined') return 'z.undefined()';
+        if (unionType === 'number') return 'z.number()';
+        if (unionType === 'date') return 'z.date()';
+        return `z.${unionType}()`;
+      });
+      schema = `z.union([${unionSchemas.join(', ')}])`;
+      
+      // Apply validations after union is created
+      if (f.validations) {
+        if (f.validations.required === false) schema += '.optional()';
+        if (f.validations.min !== undefined) schema += `.min(${f.validations.min})`;
+        if (f.validations.max !== undefined) schema += `.max(${f.validations.max})`;
+        if (f.validations.regex) schema += `.regex(/${f.validations.regex}/)`;
+        if (f.validations.custom) schema += `.refine(${f.validations.custom})`;
+        if (f.validations.default) {
+          schema += `.default(${f.validations.default})`;
+        }
+      }
+      
+      if (f.label || f.description) {
+        const describeArgs = [];
+        if (f.label) describeArgs.push(`"${f.label}"`);
+        if (f.description) describeArgs.push(`"${f.description}"`);
+        schema += `.describe(${describeArgs.join(', ')})`;
+      }
+      
+      return schema;
+    }
+
+    // Handle other types normally
     if (f.validations) {
       if (f.validations.required === false) schema += '.optional()';
       if (f.validations.min !== undefined) schema += `.min(${f.validations.min})`;
@@ -80,27 +114,40 @@ export const zodToJson = (zodSchema: z.ZodTypeAny): SchemaField => {
       field.children = [processZodType(zodType.element, 'item')];
     } else if (zodType instanceof z.ZodEnum) {
       field.type = 'enum';
-      field.enumValues = zodType._def.values;
+      field.enumValues = (zodType as any)._def.values;
+    } else if (zodType instanceof z.ZodUnion) {
+      field.type = 'union';
+      const options = (zodType as any)._def.options;
+      field.unionTypes = options.map((option: z.ZodTypeAny) => {
+        if (option instanceof z.ZodNull) return 'null';
+        if (option instanceof z.ZodNumber) return 'number';
+        if (option instanceof z.ZodString) return 'string';
+        if (option instanceof z.ZodBoolean) return 'boolean';
+        if (option instanceof z.ZodDate) return 'date';
+        return 'string'; // fallback
+      });
     } else if (zodType instanceof z.ZodNumber) {
       field.type = 'number';
     } else if (zodType instanceof z.ZodBoolean) {
       field.type = 'boolean';
     } else if (zodType instanceof z.ZodDate) {
       field.type = 'date';
+    } else if (zodType instanceof z.ZodNull) {
+      field.type = 'null';
     }
 
     field.validations = {};
-    if (zodType.isOptional()) {
+    if ((zodType as any).isOptional && (zodType as any).isOptional()) {
       field.validations.required = false;
     }
 
     if (zodType instanceof z.ZodNumber) {
-      if ('minimum' in zodType._def) field.validations.min = zodType._def.minimum as number;
-      if ('maximum' in zodType._def) field.validations.max = zodType._def.maximum as number;
+      if ('minimum' in (zodType as any)._def) field.validations.min = (zodType as any)._def.minimum;
+      if ('maximum' in (zodType as any)._def) field.validations.max = (zodType as any)._def.maximum;
     }
     
-    if (zodType instanceof z.ZodString && 'regex' in zodType._def) {
-      field.validations.regex = (zodType._def.regex as RegExp).source;
+    if (zodType instanceof z.ZodString && 'regex' in (zodType as any)._def) {
+      field.validations.regex = ((zodType as any)._def.regex as RegExp).source;
     }
 
     return field;
